@@ -1,0 +1,203 @@
+<html><head>
+<title>pomopopo</title>
+<style>
+body {
+	color: #CCC;
+	background-color: black;
+	font-family: sans-serif;
+}
+
+body.alarm {
+	background-color: #333;
+}
+
+#display {
+	font-size: 5em;
+	line-height: .8;
+	font-weight: bold;
+}
+
+#display.over {
+	color: red;
+}
+
+img#logo {
+	position: absolute;
+	top: 2px;
+	right: 2px;
+}
+
+a {
+	display: inline-block;
+	text-decoration: none;
+	color: green;
+	padding: 4px;
+	border-radius: 4px;
+	box-shadow: 0 0 8px green;
+}
+a.pause {
+	color: orange;
+	box-shadow: 0 0 8px orange;
+}
+
+a.stop {
+	color: red;
+	box-shadow: 0 0 8px red;
+}
+div {
+	margin-top: 8px;
+}
+</style>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+<script>
+function Timer(time) {
+	this.ticker = null;
+	this.alarm = null;
+	this.time = time;
+	this.started = null;
+}
+
+Timer.prototype.start = function() {
+	var tickerFunc = (function(_this) {
+		return function() {
+			TimerUI.update((_this.time - new Date().getTime() + _this.started) / 1000);
+		};
+	})(this);
+	this.started = new Date().getTime();
+	tickerFunc();
+	this.ticker = setInterval(tickerFunc, 100);
+	if (this.time > 0) {
+		this.alarm = setTimeout(TimerUI.alarm, this.time);
+	}
+};
+
+Timer.prototype.stop = function() {
+	this.time -= new Date().getTime() - this.started;
+	this.started = null;
+	clearInterval(this.ticker);
+	clearTimeout(this.alarm);
+};
+
+var TimerUI = {
+	timer: null,
+	clear: function() {
+		$('#display').removeClass('over').text(TimerUI.formatTime(0));
+		$('body').removeClass('alarm');
+		$('.control').hide();
+		TimerUI.initTimer(0);
+	},
+	update: function(time) {
+		if (time < 0) {
+			$('#display').addClass('over').text(TimerUI.formatTime(-time - 1));
+		} else {
+			$('#display').removeClass('over').text(TimerUI.formatTime(time));
+		}
+	},
+	state: function(args) {
+		if (args.running) {
+			$('.stop').show();
+			var pause = $('.control.pause');
+			var resume = $('.control.resume');
+			if (args.paused) {
+				pause.hide();
+				resume.show();
+			} else {
+				resume.hide();
+				pause.show();
+			}
+		} else {
+			$('.control').hide();
+		}
+	},
+	alarm: function() {
+		var alarm = document.getElementById('alarm');
+		if (alarm) {
+			alarm.play();
+		}
+		var b = $('body');
+		for (var i = 0; i < 14; i++) {
+			setTimeout(function() {
+				b.addClass('alarm');
+			}, 500 * i);
+			setTimeout(function() {
+				b.removeClass('alarm');
+			}, 500 * i + 250);
+		}
+	},
+	formatTime: function(seconds) {
+		seconds = Math.ceil(seconds);
+		var min = String(Math.floor(seconds / 60));
+		if (min.length < 2) {
+			min = "0" + min;
+		}
+		var sec = String(seconds % 60);
+		if (sec.length < 2) {
+			sec = "0" + sec;
+		}
+		var result = min + ':' + sec;
+		//console.log('formatTime(' + seconds + '):', result);
+		return min + ':' + sec;
+	},
+	initTimer: function(seconds) {
+		$('#countdown').text('(' + TimerUI.formatTime(seconds) + ')');
+	}
+};
+
+function startTimer(time) {
+	if (TimerUI.timer) {
+		TimerUI.timer.stop();
+	}
+	TimerUI.timer = new Timer(time * 60 * 1000);
+	TimerUI.timer.start();
+	TimerUI.initTimer(time * 60);
+	TimerUI.state({
+		running: true,
+		paused: false
+	});
+	return false;
+}
+
+function pauseTimer() {
+	TimerUI.timer.stop();
+	TimerUI.state({
+		running: true,
+		paused: true
+	});
+	return false;
+}
+
+function resumeTimer() {
+	TimerUI.timer.start();
+	TimerUI.state({
+		running: true,
+		paused: false
+	});
+	return false;
+}
+
+function stopTimer() {
+	if (TimerUI.timer) {
+		TimerUI.timer.stop();
+	}
+	TimerUI.clear();
+	return false;
+}
+
+$(stopTimer);
+
+</script>
+</head><body>
+<audio id="alarm" src="http://www.freesound.org/data/previews/117/117793_1859656-lq.mp3" preload="auto"></audio>
+<img id="logo" src="logo.png">
+<div id="display"></div>
+<div id="countdown"></div>
+<div>
+	<a class="control pause" href="javascript: void(0)" onclick="return pauseTimer();">pause</a>
+	<a class="control resume" href="javascript: void(0)" onclick="return resumeTimer();">resume</a>
+	<a class="control stop" href="javascript: void(0)" onclick="return stopTimer();">stop</a>
+</div>
+<div><a href="javascript: void(0)" onclick="return startTimer(25);">25-minute work session</a></div>
+<div><a href="javascript: void(0)" onclick="return startTimer(5);">5-minute break</a></div>
+<div><a href="javascript: void(0)" onclick="return startTimer(20);">20-minute break</a></div>
+<!--<div><a href="javascript: void(0)" onclick="return startTimer(1 / 12);">5-second test</a></div>-->
+</body></html>
