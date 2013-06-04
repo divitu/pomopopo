@@ -112,6 +112,7 @@ var TimerUI = {
 	alarm: function() {
 		var alarm = document.getElementById('alarm');
 		if (alarm) {
+			alarm.currentTime = 0;
 			alarm.play();
 		}
 		var b = $('body');
@@ -178,6 +179,10 @@ function resumeTimer() {
 function stopTimer() {
 	if (TimerUI.timer) {
 		TimerUI.timer.stop();
+	}
+	var alarm = document.getElementById('alarm');
+	if (alarm) {
+		alarm.pause();
 	}
 	TimerUI.clear();
 	return false;
