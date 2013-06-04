@@ -160,6 +160,7 @@ var TimerUI = {
 };
 
 function startTimer(time) {
+	TimerUI.Alarm.stop();
 	if (TimerUI.timer) {
 		TimerUI.timer.stop();
 	}
