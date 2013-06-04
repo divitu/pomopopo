@@ -67,7 +67,7 @@ Timer.prototype.start = function() {
 	tickerFunc();
 	this.ticker = setInterval(tickerFunc, 100);
 	if (this.time > 0) {
-		this.alarm = setTimeout(TimerUI.alarm, this.time);
+		this.alarm = setTimeout(TimerUI.Alarm.play, this.time);
 	}
 };
 
@@ -109,20 +109,38 @@ var TimerUI = {
 			$('.control').hide();
 		}
 	},
-	alarm: function() {
-		var alarm = document.getElementById('alarm');
-		if (alarm) {
-			alarm.currentTime = 0;
-			alarm.play();
-		}
-		var b = $('body');
-		for (var i = 0; i < 14; i++) {
-			setTimeout(function() {
-				b.addClass('alarm');
-			}, 500 * i);
-			setTimeout(function() {
-				b.removeClass('alarm');
-			}, 500 * i + 250);
+	initTimer: function(seconds) {
+		$('#countdown').text('(' + TimerUI.formatTime(seconds) + ')');
+	},
+	Alarm: {
+		flasher: null,
+		flashCount: 0,
+		play: function() {
+			var sound = document.getElementById('alarm');
+			if (sound) {
+				sound.currentTime = 0;
+				sound.play();
+			}
+			TimerUI.Alarm.flashCount = 0;
+			TimerUI.Alarm.flasher = setInterval(function() {
+				TimerUI.Alarm.flashCount++;
+				if (TimerUI.Alarm.flashCount > 28) {
+					$('body').removeClass('alarm');
+					clearInterval(TimerUI.Alarm.flasher);
+					TimerUI.Alarm.flasher = null;
+				} else {
+					$('body').toggleClass('alarm');
+				}
+			}, 242);
+		},
+		stop: function() {
+			var sound = document.getElementById('alarm');
+			if (sound) {
+				sound.pause();
+			}
+			$('body').removeClass('alarm');
+			clearInterval(TimerUI.Alarm.flasher);
+			TimerUI.Alarm.flasher = null;
 		}
 	},
 	formatTime: function(seconds) {
@@ -138,9 +156,6 @@ var TimerUI = {
 		var result = min + ':' + sec;
 		//console.log('formatTime(' + seconds + '):', result);
 		return min + ':' + sec;
-	},
-	initTimer: function(seconds) {
-		$('#countdown').text('(' + TimerUI.formatTime(seconds) + ')');
 	}
 };
 
@@ -180,10 +195,7 @@ function stopTimer() {
 	if (TimerUI.timer) {
 		TimerUI.timer.stop();
 	}
-	var alarm = document.getElementById('alarm');
-	if (alarm) {
-		alarm.pause();
-	}
+	TimerUI.Alarm.stop();
 	TimerUI.clear();
 	return false;
 }
