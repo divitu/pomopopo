@@ -1,6 +1,10 @@
 <html><head>
 <title>pomopopo</title>
 <style>
+.clear {
+	clear: both;
+}
+
 body {
 	color: #CCC;
 	background-color: black;
@@ -28,7 +32,10 @@ img#logo {
 }
 
 a {
-	display: inline-block;
+	display: block;
+	float: left;
+	margin-top: 8px;
+	margin-right: 8px;
 	text-decoration: none;
 	color: green;
 	padding: 4px;
@@ -45,7 +52,6 @@ a.stop {
 	box-shadow: 0 0 8px red;
 }
 div {
-	margin-top: 8px;
 }
 </style>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
@@ -213,9 +219,22 @@ $(stopTimer);
 	<a class="control pause" href="javascript: void(0)" onclick="return pauseTimer();">pause</a>
 	<a class="control resume" href="javascript: void(0)" onclick="return resumeTimer();">resume</a>
 	<a class="control stop" href="javascript: void(0)" onclick="return stopTimer();">stop</a>
+	<div class="clear"></div>
 </div>
-<div><a href="javascript: void(0)" onclick="return startTimer(25);">25-minute work session</a></div>
-<div><a href="javascript: void(0)" onclick="return startTimer(5);">5-minute break</a></div>
-<div><a href="javascript: void(0)" onclick="return startTimer(20);">20-minute break</a></div>
-<!--<div><a href="javascript: void(0)" onclick="return startTimer(1 / 12);">5-second test</a></div>-->
+<div>
+	<a href="javascript: void(0)" onclick="return startTimer(25);">25-minute work session</a>
+	<div class="clear"></div>
+</div>
+<div>
+	<a href="javascript: void(0)" onclick="return startTimer(5);">5-minute break</a>
+	<div class="clear"></div>
+</div>
+<div>
+	<a href="javascript: void(0)" onclick="return startTimer(20);">20-minute break</a>
+	<div class="clear"></div>
+</div>
+<!--<div>
+	<a href="javascript: void(0)" onclick="return startTimer(1 / 12);">5-second test</a>
+	<div class="clear"></div>
+</div>-->
 </body></html>
