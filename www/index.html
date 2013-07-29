@@ -33,7 +33,6 @@ img#logo {
 
 a {
 	display: block;
-	float: left;
 	margin-top: 8px;
 	margin-right: 8px;
 	text-decoration: none;
@@ -41,6 +40,24 @@ a {
 	padding: 4px;
 	border-radius: 4px;
 	box-shadow: 0 0 8px green;
+}
+input[type=text] {
+	display: block;
+	margin: 8px 8px 0 0;
+	text-decoration: none;
+	color: black;
+	background-color: #060;
+	padding: 4px;
+	border: none;
+	border-radius: 4px;
+	box-shadow: 0 0 8px green;
+
+	font-family: sans-serif;
+	font-size: 16px;
+	width: 4em;
+}
+a.control {
+	float: left;
 }
 a.pause {
 	color: orange;
@@ -51,11 +68,27 @@ a.stop {
 	color: red;
 	box-shadow: 0 0 8px red;
 }
-div {
+a.disabled {
+	cursor: default;
+	color: gray;
+	box-shadow: 0 0 8px gray;
 }
 </style>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
 <script>
+function uie(func) {
+	try {
+		var args = [ ];
+		Array.prototype.push.apply(args, arguments);
+		args.shift();
+		func.apply(document, args);
+	} catch (e) {
+		setTimeout(function() { throw e; }, 0);
+	} finally {
+		return false;
+	}
+}
+
 function Timer(time) {
 	this.ticker = null;
 	this.alarm = null;
@@ -89,7 +122,7 @@ var TimerUI = {
 	clear: function() {
 		$('#display').removeClass('over').text(TimerUI.formatTime(0));
 		$('body').removeClass('alarm');
-		$('.control').hide();
+		TimerUI.disable($('.control'));
 		TimerUI.initTimer(0);
 	},
 	update: function(time) {
@@ -101,19 +134,27 @@ var TimerUI = {
 	},
 	state: function(args) {
 		if (args.running) {
-			$('.stop').show();
+			TimerUI.enable($('.stop'));
 			var pause = $('.control.pause');
 			var resume = $('.control.resume');
 			if (args.paused) {
-				pause.hide();
-				resume.show();
+				TimerUI.disable(pause);
+				TimerUI.enable(resume);
 			} else {
-				resume.hide();
-				pause.show();
+				TimerUI.disable(resume);
+				TimerUI.enable(pause);
 			}
 		} else {
-			$('.control').hide();
+			TimerUI.disable($('.control'));
 		}
+	},
+	enable: function($e) {
+		$e.removeClass('disabled');
+		$e.data('enabled', true);
+	},
+	disable: function($e) {
+		$e.addClass('disabled');
+		$e.data('enabled', false);
 	},
 	initTimer: function(seconds) {
 		$('#countdown').text('(' + TimerUI.formatTime(seconds) + ')');
@@ -180,61 +221,80 @@ function startTimer(time) {
 	return false;
 }
 
-function pauseTimer() {
-	TimerUI.timer.stop();
-	TimerUI.state({
-		running: true,
-		paused: true
-	});
-	return false;
-}
-
-function resumeTimer() {
-	TimerUI.timer.start();
-	TimerUI.state({
-		running: true,
-		paused: false
-	});
-	return false;
-}
-
-function stopTimer() {
-	if (TimerUI.timer) {
+function pauseTimer(elem) {
+	if ($(elem).data('enabled')) {
 		TimerUI.timer.stop();
+		TimerUI.state({
+			running: true,
+			paused: true
+		});
 	}
-	TimerUI.Alarm.stop();
-	TimerUI.clear();
 	return false;
 }
 
-$(stopTimer);
+function resumeTimer(elem) {
+	if ($(elem).data('enabled')) {
+		TimerUI.timer.start();
+		TimerUI.state({
+			running: true,
+			paused: false
+		});
+	}
+	return false;
+}
+
+function stopTimer(elem) {
+	if ($(elem).data('enabled')) {
+		if (TimerUI.timer) {
+			TimerUI.timer.stop();
+		}
+		TimerUI.Alarm.stop();
+		TimerUI.clear();
+	}
+	return false;
+}
+
+function setTimer(time) {
+	if (TimerUI.timer) {
+		time = parseFloat(time);
+		if (isNaN(time)) {
+			throw "not a number";
+		}
+		var sec = time % 100;
+		var min = Math.floor(time / 100);
+		time = 60 * min + sec;
+		TimerUI.timer.stop();
+		TimerUI.timer.time = time * 1000;
+		TimerUI.timer.start();
+	}
+
+	return false;
+}
+
+$(TimerUI.clear);
 
 </script>
 </head><body>
 <audio id="alarm" src="alarm.mp3" preload="auto"></audio>
 <img id="logo" src="logo.png">
-<div id="display"></div>
-<div id="countdown"></div>
-<div>
-	<a class="control pause" href="javascript: void(0)" onclick="return pauseTimer();">pause</a>
-	<a class="control resume" href="javascript: void(0)" onclick="return resumeTimer();">resume</a>
-	<a class="control stop" href="javascript: void(0)" onclick="return stopTimer();">stop</a>
-	<div class="clear"></div>
+<div style="float: left; margin-right: 1em;">
+	<div id="display"></div>
+	<div id="countdown"></div>
+	<div>
+		<a class="control disabled pause" href="javascript:void(0)" onclick="return uie(pauseTimer, this);">pause</a>
+		<a class="control disabled resume" href="javascript:void(0)" onclick="return uie(resumeTimer, this);">resume</a>
+		<a class="control disabled stop" href="javascript:void(0)" onclick="return uie(stopTimer, this);">stop</a>
+		<div class="clear"></div>
+	</div>
 </div>
-<div>
-	<a href="javascript: void(0)" onclick="return startTimer(25);">25-minute work session</a>
-	<div class="clear"></div>
+<div style="float: left; margin-right: .5em;">
+	<a href="javascript:void(0)" onclick="return startTimer(25);">25-minute work session</a>
+	<a href="javascript:void(0)" onclick="return startTimer(5);">5-minute break</a>
+	<a href="javascript:void(0)" onclick="return startTimer(20);">20-minute break</a>
+	<!--<a href="javascript: void(0)" onclick="return startTimer(1 / 12);">5-second test</a>-->
 </div>
-<div>
-	<a href="javascript: void(0)" onclick="return startTimer(5);">5-minute break</a>
-	<div class="clear"></div>
+<div style="float: left;">
+	<input id="tSetTime" type="text" /><a href="javascript:void(0)" onclick="return uie(setTimer, $('#tSetTime').val());">set</a>
 </div>
-<div>
-	<a href="javascript: void(0)" onclick="return startTimer(20);">20-minute break</a>
-	<div class="clear"></div>
-</div>
-<!--<div>
-	<a href="javascript: void(0)" onclick="return startTimer(1 / 12);">5-second test</a>
-	<div class="clear"></div>
-</div>-->
+<div class="clear"></div>
 </body></html>
