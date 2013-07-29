@@ -124,6 +124,7 @@ var TimerUI = {
 		$('body').removeClass('alarm');
 		TimerUI.disable($('.control'));
 		TimerUI.initTimer(0);
+		TimerUI.timer = null;
 	},
 	update: function(time) {
 		if (time < 0) {
@@ -263,9 +264,14 @@ function setTimer(time) {
 		var sec = time % 100;
 		var min = Math.floor(time / 100);
 		time = 60 * min + sec;
-		TimerUI.timer.stop();
-		TimerUI.timer.time = time * 1000;
-		TimerUI.timer.start();
+		if (TimerUI.timer.started) {
+			TimerUI.timer.stop();
+			TimerUI.timer.time = time * 1000;
+			TimerUI.timer.start();
+		} else {
+			TimerUI.update(time)
+			TimerUI.timer.time = time * 1000;
+		}
 	}
 
 	return false;
